@@ -32,6 +32,7 @@ fn main() {
     println!("１：直接符号化");
     println!("２：支持符号化");
     println!("３：対数符号化");
+    println!("４：multivalued_encoding");
     io::stdin()
         .read_line(&mut encoding)
         .expect("Failed to read line");
@@ -41,8 +42,10 @@ fn main() {
         direct_encoding(variable, arr, domain);
     } else if encoding == 2 {
         support_encoding(variable, arr, domain);
-    } else {
+    } else if encoding == 3 {
         log_encoding(arr, domain);
+    } else{
+        multivvalued_encoding(variable, arr, domain);
     }
 }
 
@@ -313,9 +316,62 @@ fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
         writeln!(file, "0").expect("file not found.");
     }
 
+    //支持節
+    for n in 0..com.len() {
+        write!(file, "-{} ", com[n][0] + 1).expect("cannot write.");
+        for m in 0..domain {
+            if m > com[n][1] || m < com[n][1] {
+                write!(file, "{} ", m + 1 + domain).expect("cannot write.");
+            }
+        }
+        writeln!(file, "0").expect("cannot write.");
+
+        write! {file, "-{} ", com[n][1] + domain + 1}.expect("cannot write.");
+        for l in 0..domain {
+            if l > com[n][1] || l < com[n][1] {
+                write!(file, "{} ", l + 1).expect("cannot write.");
+            }
+        }
+        writeln!(file, "0").expect("cannot write.");
+    }
+
     /*claspの実行 */
     let output = Command::new("clasp")
         .args(&["-n", "0", "log_support_encoding.cnf"])
+        .output()
+        .expect("failed");
+    println!("{}", String::from_utf8_lossy(&output.stdout));
+}
+
+fn multivvalued_encoding(var: [&str; 2], com: Vec<[i32; 2]>, domain: i32) {
+    //直接符号化：変数・禁止する節の組み合わせ・ドメインを受ける。
+    let path = "multivvalued_encoding.cnf";
+    let mut file = File::create(path).expect("file not found.");
+
+    println!("----------multivvalued_encoding----------");
+    let var_size = var.len() as i32;
+    let com_size = com.len() as i32;
+    let variables = var_size * domain;
+    let clauses = var_size + domain * (domain - 1) * var_size / 2 + com_size;
+    writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
+    /*at-least-one */
+    for n in 0..var.len() {
+        let m = n as i32;
+        for j in 1..domain + 1 {
+            let i = j as i32;
+            write! {file, "{} ", m*domain+i}.expect("cannot write.");
+        }
+        writeln!(file, "0").expect("cannot write.");
+    }
+
+    /*禁止節 */
+    for n in 0..com.len() {
+        writeln!(file, "-{} -{} 0", com[n][0] + 1, com[n][1] + domain + 1).expect("cannot write.");
+    }
+
+    /*claspの実行 */
+    let output = Command::new("clasp")
+        .args(&["-n", "0", "multivvalued_encoding.cnf"])
         .output()
         .expect("failed");
     println!("{}", String::from_utf8_lossy(&output.stdout));
