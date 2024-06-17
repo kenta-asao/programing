@@ -2,7 +2,7 @@ use itertools::Itertools;
 use std::fs::File;
 use std::io;
 use std::io::Write;
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 fn main() {
     let mut encoding = String::new();
@@ -111,7 +111,7 @@ fn direct_encoding(var: [&str; 2], com: Vec<[i32; 2]>, domain: i32) {
 
 fn support_encoding(var: [&str; 2], com: Vec<[i32; 2]>, domain: i32) {
     //支持符号化：変数・禁止する節の組み合わせ・ドメインを受ける。
-    let path = "support_encoding.cnf";
+    let path = "encoding.cnf";
     let mut file = File::create(path).expect("file not found.");
 
     println!("----------支持符号化----------");
@@ -159,16 +159,12 @@ fn support_encoding(var: [&str; 2], com: Vec<[i32; 2]>, domain: i32) {
     }
 
     /*claspの実行 */
-    let output = Command::new("clasp")
-        .args(&["-n", "0", "support_encoding.cnf"])
-        .output()
-        .expect("failed");
-    println!("{}", String::from_utf8_lossy(&output.stdout));
+    clasp();
 }
 
 fn log_encoding(com: Vec<[i32; 2]>, domain: i32) {
     //対数符号化：禁止する節の組み合わせ・ドメインを受ける。
-    let path = "log_encoding.cnf";
+    let path = "encoding.cnf";
     let mut file = File::create(path).expect("file not found.");
 
     let variables = log2(domain);
@@ -242,11 +238,7 @@ fn log_encoding(com: Vec<[i32; 2]>, domain: i32) {
         writeln!(file, "0").expect("cannot write.");
     }
     /*claspの実行 */
-    let output = Command::new("clasp")
-        .args(&["-n", "0", "log_encoding.cnf"])
-        .output()
-        .expect("failed");
-    println!("{}", String::from_utf8_lossy(&output.stdout));
+    clasp();
 }
 
 fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
@@ -355,12 +347,12 @@ fn multivvalued_encoding(var: [&str; 2], com: Vec<[i32; 2]>, domain: i32) {
 }
 
 fn clasp(){
+    let output_file = File::create("result.txt").expect("Failed to create file");
+
     let output = Command::new("clasp")
-        .args(&["-n", "0", "encoding.cnf",">", ])
+        .stdout(Stdio::from(output_file))
+        .args(&["-n", "0", "encoding.cnf"])
         .output()
         .expect("failed");
     println!("{}", String::from_utf8_lossy(&output.stdout));
-
-    let mut file = File::create("result.txt").expect("Failed to create file");
-    file.write_all(&output.stdout).expect("Failed to write to file");
 }
