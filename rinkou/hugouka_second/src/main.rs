@@ -74,7 +74,7 @@ fn power(num: i32, a: i32) -> i32 {
 
 fn direct_encoding(var: [&str; 2], com: Vec<[i32; 2]>, domain: i32) {
     //直接符号化：変数・禁止する節の組み合わせ・ドメインを受ける。
-    let path = "direct_encoding.cnf";
+    let path = "encoding.cnf";
     let mut file = File::create(path).expect("file not found.");
 
     println!("----------直接符号化----------");
@@ -106,11 +106,7 @@ fn direct_encoding(var: [&str; 2], com: Vec<[i32; 2]>, domain: i32) {
     }
 
     /*claspの実行 */
-    let output = Command::new("clasp")
-        .args(&["-n", "0", "direct_encoding.cnf"])
-        .output()
-        .expect("failed");
-    println!("{}", String::from_utf8_lossy(&output.stdout));
+    clasp();
 }
 
 fn support_encoding(var: [&str; 2], com: Vec<[i32; 2]>, domain: i32) {
@@ -356,4 +352,15 @@ fn multivvalued_encoding(var: [&str; 2], com: Vec<[i32; 2]>, domain: i32) {
         .output()
         .expect("failed");
     println!("{}", String::from_utf8_lossy(&output.stdout));
+}
+
+fn clasp(){
+    let output = Command::new("clasp")
+        .args(&["-n", "0", "encoding.cnf",">", ])
+        .output()
+        .expect("failed");
+    println!("{}", String::from_utf8_lossy(&output.stdout));
+
+    let mut file = File::create("result.txt").expect("Failed to create file");
+    file.write_all(&output.stdout).expect("Failed to write to file");
 }
