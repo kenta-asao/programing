@@ -316,7 +316,7 @@ fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
         writeln!(file, "0").expect("file not found.");
     }
 
-    //支持節
+    //支持節　未完成
     for n in 0..com.len() {
         write!(file, "-{} ", com[n][0] + 1).expect("cannot write.");
         for m in 0..domain {
