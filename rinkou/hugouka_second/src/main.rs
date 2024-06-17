@@ -315,7 +315,7 @@ fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
 
     /*claspの実行 */
     let output = Command::new("clasp")
-        .args(&["-n", "0", "log_encoding.cnf"])
+        .args(&["-n", "0", "log_support_encoding.cnf"])
         .output()
         .expect("failed");
     println!("{}", String::from_utf8_lossy(&output.stdout));
