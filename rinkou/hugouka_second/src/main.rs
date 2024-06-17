@@ -32,7 +32,8 @@ fn main() {
     println!("１：直接符号化");
     println!("２：支持符号化");
     println!("３：対数符号化");
-    println!("４：multivalued_encoding");
+    println!("４：対数支持符号化");
+    println!("５：multivalued_encoding");
     io::stdin()
         .read_line(&mut encoding)
         .expect("Failed to read line");
@@ -44,8 +45,10 @@ fn main() {
         support_encoding(variable, arr, domain);
     } else if encoding == 3 {
         log_encoding(arr, domain);
-    } else{
+    } else if encoding == 4 {
         multivvalued_encoding(variable, arr, domain);
+    } else {
+        log_support_encoding(arr, domain);
     }
 }
 
