@@ -52,28 +52,6 @@ fn main() {
     }
 }
 
-/*fn at_least_one(var: [&str; 2], domain: i32) {
-    //at-least-one節
-    for n in 0..var.len() {
-        let m = n as i32;
-        for j in 1..domain + 1 {
-            let i = j as i32;
-            print! {"{} ", m*domain+i};
-        }
-        println!("0");
-    }
-}*/
-
-/*fn at_most_one(var: [&str; 2], domain: i32) {
-    //at-most-one節
-    for n in 0..var.len() {
-        let m = n as i32;
-        for comb in (m * domain + 1..(m + 1) * domain + 1).combinations(2) {
-            println!("-{} -{} 0", comb[0], comb[1]);
-        }
-    }
-}*/
-
 fn log2(num: i32) -> i32 {
     let mut n: i32 = 0;
     loop {
