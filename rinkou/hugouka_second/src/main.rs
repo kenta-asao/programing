@@ -3,6 +3,8 @@ use std::fs::File;
 use std::io;
 use std::io::Write;
 use std::process::{Command, Stdio};
+use regex::Regex;
+use std::io::{ BufReader, BufRead };
 
 fn main() {
     let mut encoding = String::new();
@@ -50,6 +52,8 @@ fn main() {
     } else {
         log_support_encoding(arr, domain);
     }
+
+    decryption();
 }
 
 fn log2(num: i32) -> i32 {
@@ -243,7 +247,7 @@ fn log_encoding(com: Vec<[i32; 2]>, domain: i32) {
 
 fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
     //対数符号化：禁止する節の組み合わせ・ドメインを受ける。
-    let path = "log_support_encoding.cnf";
+    let path = "encoding.cnf";
     let mut file = File::create(path).expect("file not found.");
 
     let variables = log2(domain);
@@ -305,16 +309,12 @@ fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
     }
 
     /*claspの実行 */
-    let output = Command::new("clasp")
-        .args(&["-n", "0", "log_support_encoding.cnf"])
-        .output()
-        .expect("failed");
-    println!("{}", String::from_utf8_lossy(&output.stdout));
+    clasp();
 }
 
 fn multivvalued_encoding(var: [&str; 2], com: Vec<[i32; 2]>, domain: i32) {
     //直接符号化：変数・禁止する節の組み合わせ・ドメインを受ける。
-    let path = "multivvalued_encoding.cnf";
+    let path = "encoding.cnf";
     let mut file = File::create(path).expect("file not found.");
 
     println!("----------multivvalued_encoding----------");
@@ -339,13 +339,10 @@ fn multivvalued_encoding(var: [&str; 2], com: Vec<[i32; 2]>, domain: i32) {
     }
 
     /*claspの実行 */
-    let output = Command::new("clasp")
-        .args(&["-n", "0", "multivvalued_encoding.cnf"])
-        .output()
-        .expect("failed");
-    println!("{}", String::from_utf8_lossy(&output.stdout));
+    clasp();
 }
 
+//claspの実行
 fn clasp(){
     let output_file = File::create("result.txt").expect("Failed to create file");
 
@@ -355,4 +352,17 @@ fn clasp(){
         .output()
         .expect("failed");
     println!("{}", String::from_utf8_lossy(&output.stdout));
+}
+
+//復号化
+fn decryption() -> std::io::Result<()> {
+    let path = "result.txt";
+    let input = File::open(path)?;
+    let buffered = BufReader::new(input);
+
+    for line in buffered.lines() {
+        println!("{}", line?);
+    }
+
+    Ok(())
 }
