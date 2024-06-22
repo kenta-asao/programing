@@ -395,6 +395,7 @@ fn decryption(encoding:u32, domain:i32) -> std::io::Result<()> {
 
     // CNF形式の出力
 
+    println!("解");
     println!("x,y");
 
     if encoding == 1 {
