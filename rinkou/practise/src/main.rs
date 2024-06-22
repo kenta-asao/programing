@@ -41,15 +41,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // CNF形式の出力
-    println!("p cnf {} {}", count_variables(&clauses), clauses.len());
-    for clause in &clauses {
-        for literal in clause {
-            print!("{} ", literal);
+    let domain = 3;
+
+    println!("x,y");
+    
+    for n in 0..clauses.len() {
+        let mut x = 0;
+        let mut y = 0;
+        for i in 0..domain {
+            if clauses[n][i]>0 {
+                x = i;
+            }
+            if clauses[n][i+count_variables(&clauses)/2]>0 {
+                y = i;
+            }
         }
-        println!("0");
+        println!("{},{}", x, y);
     }
 
     Ok(())
+}
+
+fn power(num: i32, a: i32) -> i32 {
+    //numのa乗を返す
+    let mut x = 1;
+    for _n in 0..a {
+        x = x * num;
+    }
+    return x;
 }
 
 // 変数の数を数える関数
