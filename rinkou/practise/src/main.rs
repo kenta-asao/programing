@@ -41,19 +41,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // CNF形式の出力
-    let domain = 3;
+    let domain = 4;
 
     println!("x,y");
     
     for n in 0..clauses.len() {
         let mut x = 0;
         let mut y = 0;
-        for i in 0..domain {
-            if clauses[n][i]>0 {
-                x = i;
+        for i in 0..log2(domain) {
+            if clauses[n][i as usize]>0 {
+                x = x + power(2,i as i32);
             }
-            if clauses[n][i+count_variables(&clauses)/2]>0 {
-                y = i;
+            if clauses[n][(i as usize)+count_variables(&clauses)/2]>0 {
+                y = y + power(2,i as i32);
             }
         }
         println!("{},{}", x, y);
@@ -80,4 +80,15 @@ fn count_variables(clauses: &Vec<Vec<i32>>) -> usize {
         }
     }
     variables.len()
+}
+
+fn log2(num: i32) -> i32 {
+    let mut n: i32 = 0;
+    loop {
+        if n * 2 >= num {
+            break;
+        }
+        n += 1;
+    }
+    return n;
 }

@@ -8,8 +8,8 @@ use std::io::BufRead;
 fn main() {
     let mut encoding = String::new();
     let variable: [&str; 2] = ["x", "y"]; //変数
-    let com_num: i32 = 3; //組み合わせの数
-    let domain: i32 = 3; //ドメイン
+    let com_num: i32 = 4; //組み合わせの数
+    let domain: i32 = 4; //ドメイン
     let mut arr = vec![];
 
     for _n in 0..com_num {
@@ -430,7 +430,7 @@ fn decryption(encoding:u32, domain:i32) -> std::io::Result<()> {
         for n in 0..clauses.len() {
             let mut x = 0;
             let mut y = 0;
-            for i in 0..domain-1 {
+            for i in 0..log2(domain) {
                 if clauses[n][i as usize]>0 {
                     x = x + power(2,i as i32);
                 }
