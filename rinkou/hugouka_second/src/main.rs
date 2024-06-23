@@ -8,8 +8,8 @@ use std::io::BufRead;
 fn main() {
     let mut encoding = String::new();
     let variable: [&str; 2] = ["x", "y"]; //変数
-    let com_num: i32 = 4; //組み合わせの数
-    let domain: i32 = 4; //ドメイン
+    let com_num: i32 = 3; //組み合わせの数
+    let domain: i32 = 3; //ドメイン
     let mut arr = vec![];
 
     for _n in 0..com_num {
@@ -47,9 +47,9 @@ fn main() {
     } else if encoding == 3 {
         log_encoding(arr, domain);
     } else if encoding == 4 {
-        multivvalued_encoding(variable, arr, domain);
-    } else {
         log_support_encoding(arr, domain);
+    } else {
+        multivalued_encoding(variable, arr, domain);
     }
 
     let _ = decryption(encoding, domain);
@@ -251,7 +251,7 @@ fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
 
     let variables = log2(domain);
     let com_size = com.len() as i32;
-    let clauses = com_size + (power(2, variables) - domain) * 2;
+    let clauses = com_size*2 + (power(2, variables) - domain) * 2;
 
     println!("----------対数支持符号化----------");
     writeln!(file, "p cnf {} {}", variables * 2, clauses).expect("file not found.");
@@ -290,28 +290,65 @@ fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
 
     //支持節　未完成
     for n in 0..com.len() {
-        write!(file, "-{} ", com[n][0] + 1).expect("cannot write.");
+        
+        let mut log_x = com[n][0];
+        for x in 0..variables {
+            if log_x % 2 == 1 {
+                write!(file,"-{} ",x+1).expect("file not found.");
+            }
+            else {
+                write!(file, "{} ", x+1).expect("file not found.");
+            }
+            log_x = log_x/2;
+        }
         for m in 0..domain {
             if m > com[n][1] || m < com[n][1] {
-                write!(file, "{} ", m + 1 + domain).expect("cannot write.");
+                let mut y = m;
+                for y_ok in 0..variables {
+                    if y % 2 == 1 {
+                        write!(file,"{} ",y_ok+1+variables).expect("file not found.");
+                    }
+                    else {
+                        write!(file, "-{} ", y_ok+1+variables).expect("file not found.");
+                    }
+                    y = y/2;
+                }
             }
         }
         writeln!(file, "0").expect("cannot write.");
 
-        write! {file, "-{} ", com[n][1] + domain + 1}.expect("cannot write.");
+        let mut log_y = com[n][1];
+        for y in 0..variables {
+            if log_y % 2 == 1 {
+                write!(file,"-{} ",y+1+variables).expect("file not found.");
+            }
+            else {
+                write!(file, "{} ", y+1+variables).expect("file not found.");
+            }
+            log_y = log_y/2;
+        }
         for l in 0..domain {
             if l > com[n][1] || l < com[n][1] {
-                write!(file, "{} ", l + 1).expect("cannot write.");
+                let mut x = l;
+                for x_ok in 0..variables {
+                    if x % 2 == 1 {
+                        write!(file,"{} ",x_ok+1).expect("file not found.");
+                    }
+                    else {
+                        write!(file, "-{} ", x_ok+1).expect("file not found.");
+                    }
+                    x = x/2;
+                }
             }
         }
         writeln!(file, "0").expect("cannot write.");
     }
-
+    
     /*claspの実行 */
     clasp();
 }
 
-fn multivvalued_encoding(var: [&str; 2], com: Vec<[i32; 2]>, domain: i32) {
+fn multivalued_encoding(var: [&str; 2], com: Vec<[i32; 2]>, domain: i32) {
     //直接符号化：変数・禁止する節の組み合わせ・ドメインを受ける。
     let path = "encoding.cnf";
     let mut file = File::create(path).expect("file not found.");
@@ -441,7 +478,33 @@ fn decryption(encoding:u32, domain:i32) -> std::io::Result<()> {
             println!("{},{}", x, y);
         }
     } else if encoding == 4 {
+        for n in 0..clauses.len() {
+            let mut x = 0;
+            let mut y = 0;
+            for i in 0..log2(domain) {
+                if clauses[n][i as usize]>0 {
+                    x = x + power(2,i as i32);
+                }
+                if clauses[n][(i as usize)+count_variables(&clauses)/2]>0 {
+                    y = y + power(2,i as i32);
+                }
+            }
+            println!("{},{}", x, y);
+        }
     } else {
+        for n in 0..clauses.len() {
+            let mut x = 0;
+            let mut y = 0;
+            for i in 0..domain {
+                if clauses[n][i as usize]>0 {
+                    x = i;
+                }
+                if clauses[n][(i as usize)+count_variables(&clauses)/2]>0 {
+                    y = i;
+                }
+            }
+            println!("{},{}", x, y);
+        }
     }
 
     Ok(())
