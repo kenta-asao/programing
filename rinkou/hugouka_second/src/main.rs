@@ -4,6 +4,7 @@ use std::io;
 use std::io::Write;
 use std::process::{Command, Stdio};
 use std::io::BufRead;
+use std::collections::HashSet;
 
 fn main() {
     let mut encoding = String::new();
@@ -73,6 +74,16 @@ fn power(num: i32, a: i32) -> i32 {
         x = x * num;
     }
     return x;
+}
+
+fn has_common_elements<T: std::cmp::Eq + std::hash::Hash>(array1: &[T], array2: &[T]) -> bool {
+    let set1: HashSet<_> = array1.iter().collect();
+    for element in array2.iter() {
+        if set1.contains(element) {
+            return true;
+        }
+    }
+    false
 }
 
 fn direct_encoding(var: [&str; 2], com: Vec<[i32; 2]>, domain: i32) {
@@ -290,58 +301,98 @@ fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
 
     //支持節　未完成
     for n in 0..com.len() {
-        
-        let mut log_x = com[n][0];
-        for x in 0..variables {
-            if log_x % 2 == 1 {
-                write!(file,"-{} ",x+1).expect("file not found.");
-            }
-            else {
-                write!(file, "{} ", x+1).expect("file not found.");
-            }
-            log_x = log_x/2;
-        }
+        let mut y_ok_arr = vec![];
+        let mut y_ok_domain_arr =vec![];
         for m in 0..domain {
             if m > com[n][1] || m < com[n][1] {
-                let mut y = m;
-                for y_ok in 0..variables {
-                    if y % 2 == 1 {
-                        write!(file,"{} ",y_ok+1+variables).expect("file not found.");
+                y_ok_arr.push(m);
+                y_ok_domain_arr.push(power(2,variables)-1-m-1);
+            }
+        }
+        
+        if has_common_elements(&y_ok_arr,&y_ok_domain_arr) == false {
+            let mut log_x = com[n][0];
+            for x in 0..variables {
+                if log_x % 2 == 1 {
+                    write!(file,"-{} ",x+1).expect("file not found.");
+                }
+                else {
+                    write!(file, "{} ", x+1).expect("file not found.");
+                }
+                log_x = log_x/2;
+            }
+            for m in 0..domain {
+                if m > com[n][1] || m < com[n][1] {
+                    let mut y = m;
+                    for y_ok in 0..variables {
+                        if y % 2 == 1 {
+                            write!(file,"{} ",y_ok+1+variables).expect("file not found.");
+                        }
+                        else {
+                            write!(file, "-{} ", y_ok+1+variables).expect("file not found.");
+                        }
+                        y = y/2;
                     }
-                    else {
-                        write!(file, "-{} ", y_ok+1+variables).expect("file not found.");
-                    }
-                    y = y/2;
+                }
+            }
+            writeln!(file, "0").expect("cannot write.");
+            let mut log_y = com[n][1];
+            for y in 0..variables {
+                if log_y % 2 == 1 {
+                    write!(file,"-{} ",y+1+variables).expect("file not found.");
+                }
+                else {
+                    write!(file, "{} ", y+1+variables).expect("file not found.");
+                }
+                log_y = log_y/2;
+            }
+            for l in 0..domain {
+                if l > com[n][1] || l < com[n][1] {
+                    let mut x = l;
+                    for x_ok in 0..variables {
+                        if x % 2 == 1 {
+                            write!(file,"{} ",x_ok+1).expect("file not found.");
+                        }
+                        else {
+                            write!(file, "-{} ", x_ok+1).expect("file not found.");
+                        }
+                        x = x/2;
                 }
             }
         }
         writeln!(file, "0").expect("cannot write.");
+        } else {
+            let mut arr1 = vec![];
+            let mut arr2 = vec![];
+            let mut a = com[n][0];
+            let mut b = com[n][1];
 
-        let mut log_y = com[n][1];
-        for y in 0..variables {
-            if log_y % 2 == 1 {
-                write!(file,"-{} ",y+1+variables).expect("file not found.");
+            //変数１・２の対数化
+            for _i in 0..variables {
+                arr1.push(a % 2);
+                arr2.push(b % 2);
+                a = a / 2;
+                b = b / 2;
             }
-            else {
-                write!(file, "{} ", y+1+variables).expect("file not found.");
-            }
-            log_y = log_y/2;
-        }
-        for l in 0..domain {
-            if l > com[n][1] || l < com[n][1] {
-                let mut x = l;
-                for x_ok in 0..variables {
-                    if x % 2 == 1 {
-                        write!(file,"{} ",x_ok+1).expect("file not found.");
-                    }
-                    else {
-                        write!(file, "-{} ", x_ok+1).expect("file not found.");
-                    }
-                    x = x/2;
+
+            //変数１の矛盾
+            for j in 0..(variables as usize) {
+                if arr1[j] == 1 {
+                    write! {file, "-"}.expect("cannot write.");
                 }
+                write!(file, "{} ", j + 1).expect("cannot write.");
             }
+            //変数２の矛盾
+            for k in 0..(variables as usize) {
+                if arr2[k] == 1 {
+                    write!(file, "-").expect("cannot write.");
+                }
+                write!(file, "{} ", k + (variables as usize) + 1).expect("cannot write.");
+            }
+            writeln!(file, "0").expect("cannot write.");
         }
-        writeln!(file, "0").expect("cannot write.");
+
+        
     }
     
     /*claspの実行 */
