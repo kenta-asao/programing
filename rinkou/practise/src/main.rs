@@ -1,5 +1,4 @@
 use itertools::Itertools;
-use std::collections::HashSet;
 use std::fs::File;
 use std::io;
 use std::io::BufRead;
@@ -35,7 +34,6 @@ fn main() {
     println!("２：支持符号化");
     println!("３：対数符号化");
     println!("４：対数支持符号化");
-    println!("５：multivalued_encoding");
     io::stdin()
         .read_line(&mut encoding)
         .expect("Failed to read line");
@@ -47,10 +45,8 @@ fn main() {
         support_encoding(variable, arr, domain);
     } else if encoding == 3 {
         log_encoding(arr, domain);
-    } else if encoding == 4 {
-        log_support_encoding(arr, domain);
     } else {
-        multivalued_encoding(variable, arr, domain);
+        log_support_encoding(arr, domain);
     }
 
     let _ = decryption(encoding, domain);
@@ -74,16 +70,6 @@ fn power(num: i32, a: i32) -> i32 {
         x = x * num;
     }
     return x;
-}
-
-fn has_common_elements<T: std::cmp::Eq + std::hash::Hash>(array1: &[T], array2: &[T]) -> bool {
-    let set1: HashSet<_> = array1.iter().collect();
-    for element in array2.iter() {
-        if set1.contains(element) {
-            return true;
-        }
-    }
-    false
 }
 
 fn direct_encoding(var: [&str; 2], com: Vec<[i32; 2]>, domain: i32) {
@@ -299,21 +285,26 @@ fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
         writeln!(file, "0").expect("file not found.");
     }
 
-    //支持節　未完成
+    //支持節
     for n in 0..com.len() {
+        let mut x_ok_arr = vec![];
+        let mut x_ok_domain_arr = vec![];
         let mut y_ok_arr = vec![];
         let mut y_ok_domain_arr = vec![];
         for m in 0..com.len() + 1 {
             if (m as i32) > com[n][1] || (m as i32) < com[n][1] {
                 y_ok_arr.push(m as i32);
                 y_ok_domain_arr.push(power(2, variables) - 1 - (m as i32) - 1);
-                println!("{}", m);
-                println!("{}", power(2, variables) - 1 - (m as i32));
             }
-            println!("===")
+        }
+        for m in 0..com.len() + 1 {
+            if (m as i32) > com[n][0] || (m as i32) < com[n][0] {
+                x_ok_arr.push(m as i32);
+                x_ok_domain_arr.push(power(2, variables) - 1 - (m as i32) - 1);
+            }
         }
 
-        if y_ok_arr[n] != y_ok_domain_arr[n] {
+        if x_ok_arr[n] != x_ok_domain_arr[n] && y_ok_arr[n] != y_ok_domain_arr[n] {
             let mut log_x = com[n][0];
             for x in 0..variables {
                 if log_x % 2 == 1 {
@@ -403,36 +394,6 @@ fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
             }
             writeln!(file, "0").expect("cannot write.");
         }
-    }
-
-    /*claspの実行 */
-    clasp();
-}
-
-fn multivalued_encoding(var: [&str; 2], com: Vec<[i32; 2]>, domain: i32) {
-    //直接符号化：変数・禁止する節の組み合わせ・ドメインを受ける。
-    let path = "encoding.cnf";
-    let mut file = File::create(path).expect("file not found.");
-
-    println!("----------multivvalued_encoding----------");
-    let var_size = var.len() as i32;
-    let com_size = com.len() as i32;
-    let variables = var_size * domain;
-    let clauses = var_size + domain * (domain - 1) * var_size / 2 + com_size;
-    writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
-    /*at-least-one */
-    for n in 0..var.len() {
-        let m = n as i32;
-        for j in 1..domain + 1 {
-            let i = j as i32;
-            write! {file, "{} ", m*domain+i}.expect("cannot write.");
-        }
-        writeln!(file, "0").expect("cannot write.");
-    }
-
-    /*禁止節 */
-    for n in 0..com.len() {
-        writeln!(file, "-{} -{} 0", com[n][0] + 1, com[n][1] + domain + 1).expect("cannot write.");
     }
 
     /*claspの実行 */

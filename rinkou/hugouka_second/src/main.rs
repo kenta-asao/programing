@@ -1,9 +1,9 @@
 use itertools::Itertools;
 use std::fs::File;
 use std::io;
+use std::io::BufRead;
 use std::io::Write;
 use std::process::{Command, Stdio};
-use std::io::BufRead;
 
 fn main() {
     let mut encoding = String::new();
@@ -248,7 +248,7 @@ fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
 
     let variables = log2(domain);
     let com_size = com.len() as i32;
-    let clauses = com_size*2 + (power(2, variables) - domain) * 2;
+    let clauses = com_size * 2 + (power(2, variables) - domain) * 2;
 
     println!("----------対数支持符号化----------");
     writeln!(file, "p cnf {} {}", variables * 2, clauses).expect("file not found.");
@@ -288,28 +288,31 @@ fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
     //支持節
     for n in 0..com.len() {
         let mut x_ok_arr = vec![];
-        let mut x_ok_domain_arr =vec![];
+        let mut x_ok_domain_arr = vec![];
         let mut y_ok_arr = vec![];
-        let mut y_ok_domain_arr =vec![];
-        for m in 0..com.len()+1 {
+        let mut y_ok_domain_arr = vec![];
+        for m in 0..com.len() + 1 {
             if (m as i32) > com[n][1] || (m as i32) < com[n][1] {
-                x_ok_arr.push(m as i32);
-                x_ok_domain_arr.push(power(2,variables)-1-(m as i32)-1);
                 y_ok_arr.push(m as i32);
-                y_ok_domain_arr.push(power(2,variables)-1-(m as i32)-1);
+                y_ok_domain_arr.push(power(2, variables) - 1 - (m as i32) - 1);
             }
         }
-        
-        if x_ok_arr[n] != x_ok_domain_arr[n] || y_ok_arr[n] != y_ok_domain_arr[n] {
+        for m in 0..com.len() + 1 {
+            if (m as i32) > com[n][0] || (m as i32) < com[n][0] {
+                x_ok_arr.push(m as i32);
+                x_ok_domain_arr.push(power(2, variables) - 1 - (m as i32) - 1);
+            }
+        }
+
+        if x_ok_arr[n] != x_ok_domain_arr[n] && y_ok_arr[n] != y_ok_domain_arr[n] {
             let mut log_x = com[n][0];
             for x in 0..variables {
                 if log_x % 2 == 1 {
-                    write!(file,"-{} ",x+1).expect("file not found.");
+                    write!(file, "-{} ", x + 1).expect("file not found.");
+                } else {
+                    write!(file, "{} ", x + 1).expect("file not found.");
                 }
-                else {
-                    write!(file, "{} ", x+1).expect("file not found.");
-                }
-                log_x = log_x/2;
+                log_x = log_x / 2;
             }
             let mut arr_y = vec![];
             for m in 0..domain {
@@ -317,18 +320,17 @@ fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
                     let mut y = m;
                     for y_ok in 0..variables {
                         if y % 2 == 1 {
-                            arr_y.push(y_ok+1+variables);
+                            arr_y.push(y_ok + 1 + variables);
+                        } else {
+                            arr_y.push((y_ok + 1 + variables) * (-1));
                         }
-                        else {
-                            arr_y.push((y_ok+1+variables)*(-1));
-                        }
-                        y = y/2;
+                        y = y / 2;
                     }
                 }
             }
             for m in 0..arr_y.len() {
-                if contains(&arr_y, (arr_y[m])*(-1)) == false {
-                    write!{file, "{} ", arr_y[m]}.expect("file not found.");
+                if contains(&arr_y, (arr_y[m]) * (-1)) == false {
+                    write! {file, "{} ", arr_y[m]}.expect("file not found.");
                 }
             }
             writeln!(file, "0").expect("cannot write.");
@@ -336,12 +338,11 @@ fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
             let mut log_y = com[n][1];
             for y in 0..variables {
                 if log_y % 2 == 1 {
-                    write!(file,"-{} ",y+1+variables).expect("file not found.");
+                    write!(file, "-{} ", y + 1 + variables).expect("file not found.");
+                } else {
+                    write!(file, "{} ", y + 1 + variables).expect("file not found.");
                 }
-                else {
-                    write!(file, "{} ", y+1+variables).expect("file not found.");
-                }
-                log_y = log_y/2;
+                log_y = log_y / 2;
             }
             let mut arr_x = vec![];
             for l in 0..domain {
@@ -349,21 +350,20 @@ fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
                     let mut x = l;
                     for x_ok in 0..variables {
                         if x % 2 == 1 {
-                            arr_x.push(x_ok+1);
+                            arr_x.push(x_ok + 1);
+                        } else {
+                            arr_x.push((x_ok + 1) * (-1));
                         }
-                        else {
-                            arr_x.push((x_ok+1)*(-1));
-                        }
-                        x = x/2;
+                        x = x / 2;
+                    }
                 }
             }
-        }
-        for m in 0..arr_x.len() {
-            if contains(&arr_x, (arr_x[m])*(-1)) == false {
-                write!{file, "{} ", arr_x[m]}.expect("file not found.");
+            for m in 0..arr_x.len() {
+                if contains(&arr_x, (arr_x[m]) * (-1)) == false {
+                    write! {file, "{} ", arr_x[m]}.expect("file not found.");
+                }
             }
-        }
-        writeln!(file, "0").expect("cannot write.");
+            writeln!(file, "0").expect("cannot write.");
         } else {
             let mut arr1 = vec![];
             let mut arr2 = vec![];
@@ -394,16 +394,14 @@ fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
             }
             writeln!(file, "0").expect("cannot write.");
         }
-
-        
     }
-    
+
     /*claspの実行 */
     clasp();
 }
 
 //claspの実行
-fn clasp(){
+fn clasp() {
     let output_file = File::create("result.txt").expect("Failed to create file");
 
     let output = Command::new("clasp")
@@ -415,7 +413,7 @@ fn clasp(){
 }
 
 //復号化
-fn decryption(encoding:u32, domain:i32) -> std::io::Result<()> {
+fn decryption(encoding: u32, domain: i32) -> std::io::Result<()> {
     // claspの実行結果ファイルのパス
     let path = "result.txt";
 
@@ -441,13 +439,14 @@ fn decryption(encoding:u32, domain:i32) -> std::io::Result<()> {
         if line.starts_with("v ") {
             // "v " を取り除く
             let values = line[2..].trim_end();
-            let literals: Vec<i32> = values.split_whitespace()
+            let literals: Vec<i32> = values
+                .split_whitespace()
                 .filter_map(|s| s.parse().ok())
                 .collect();
 
             // 0で終わるリストの場合、0を除く
             if let Some(&0) = literals.last() {
-                clauses.push(literals[..literals.len()-1].to_vec());
+                clauses.push(literals[..literals.len() - 1].to_vec());
             } else {
                 clauses.push(literals);
             }
@@ -464,10 +463,10 @@ fn decryption(encoding:u32, domain:i32) -> std::io::Result<()> {
             let mut x = 0;
             let mut y = 0;
             for i in 0..domain {
-                if clauses[n][i as usize]>0 {
+                if clauses[n][i as usize] > 0 {
                     x = i;
                 }
-                if clauses[n][(i as usize)+count_variables(&clauses)/2]>0 {
+                if clauses[n][(i as usize) + count_variables(&clauses) / 2] > 0 {
                     y = i;
                 }
             }
@@ -478,10 +477,10 @@ fn decryption(encoding:u32, domain:i32) -> std::io::Result<()> {
             let mut x = 0;
             let mut y = 0;
             for i in 0..domain {
-                if clauses[n][i as usize]>0 {
+                if clauses[n][i as usize] > 0 {
                     x = i;
                 }
-                if clauses[n][(i as usize)+count_variables(&clauses)/2]>0 {
+                if clauses[n][(i as usize) + count_variables(&clauses) / 2] > 0 {
                     y = i;
                 }
             }
@@ -492,11 +491,11 @@ fn decryption(encoding:u32, domain:i32) -> std::io::Result<()> {
             let mut x = 0;
             let mut y = 0;
             for i in 0..log2(domain) {
-                if clauses[n][i as usize]>0 {
-                    x = x + power(2,i as i32);
+                if clauses[n][i as usize] > 0 {
+                    x = x + power(2, i as i32);
                 }
-                if clauses[n][(i as usize)+count_variables(&clauses)/2]>0 {
-                    y = y + power(2,i as i32);
+                if clauses[n][(i as usize) + count_variables(&clauses) / 2] > 0 {
+                    y = y + power(2, i as i32);
                 }
             }
             println!("{},{}", x, y);
@@ -506,11 +505,11 @@ fn decryption(encoding:u32, domain:i32) -> std::io::Result<()> {
             let mut x = 0;
             let mut y = 0;
             for i in 0..log2(domain) {
-                if clauses[n][i as usize]>0 {
-                    x = x + power(2,i as i32);
+                if clauses[n][i as usize] > 0 {
+                    x = x + power(2, i as i32);
                 }
-                if clauses[n][(i as usize)+count_variables(&clauses)/2]>0 {
-                    y = y + power(2,i as i32);
+                if clauses[n][(i as usize) + count_variables(&clauses) / 2] > 0 {
+                    y = y + power(2, i as i32);
                 }
             }
             println!("{},{}", x, y);
@@ -520,10 +519,10 @@ fn decryption(encoding:u32, domain:i32) -> std::io::Result<()> {
             let mut x = 0;
             let mut y = 0;
             for i in 0..domain {
-                if clauses[n][i as usize]>0 {
+                if clauses[n][i as usize] > 0 {
                     x = i;
                 }
-                if clauses[n][(i as usize)+count_variables(&clauses)/2]>0 {
+                if clauses[n][(i as usize) + count_variables(&clauses) / 2] > 0 {
                     y = i;
                 }
             }
