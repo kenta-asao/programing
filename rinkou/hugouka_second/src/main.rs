@@ -4,7 +4,6 @@ use std::io;
 use std::io::Write;
 use std::process::{Command, Stdio};
 use std::io::BufRead;
-use std::collections::HashSet;
 
 fn main() {
     let mut encoding = String::new();
@@ -74,16 +73,6 @@ fn power(num: i32, a: i32) -> i32 {
         x = x * num;
     }
     return x;
-}
-
-fn has_common_elements<T: std::cmp::Eq + std::hash::Hash>(array1: &[T], array2: &[T]) -> bool {
-    let set1: HashSet<_> = array1.iter().collect();
-    for element in array2.iter() {
-        if set1.contains(element) {
-            return true;
-        }
-    }
-    false
 }
 
 fn direct_encoding(var: [&str; 2], com: Vec<[i32; 2]>, domain: i32) {
@@ -299,21 +288,22 @@ fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
         writeln!(file, "0").expect("file not found.");
     }
 
-    //支持節　未完成
+    //支持節
     for n in 0..com.len() {
+        let mut x_ok_arr = vec![];
+        let mut x_ok_domain_arr =vec![];
         let mut y_ok_arr = vec![];
         let mut y_ok_domain_arr =vec![];
         for m in 0..com.len()+1 {
             if (m as i32) > com[n][1] || (m as i32) < com[n][1] {
+                x_ok_arr.push(m as i32);
+                x_ok_domain_arr.push(power(2,variables)-1-(m as i32)-1);
                 y_ok_arr.push(m as i32);
                 y_ok_domain_arr.push(power(2,variables)-1-(m as i32)-1);
-                println!("{}" ,m);
-                println!("{}" ,power(2,variables)-1-(m as i32));
             }
-            println!("===")
         }
         
-        if y_ok_arr[n] != y_ok_domain_arr[n] {
+        if x_ok_arr[n] != x_ok_domain_arr[n] || y_ok_arr[n] != y_ok_domain_arr[n] {
             let mut log_x = com[n][0];
             for x in 0..variables {
                 if log_x % 2 == 1 {
