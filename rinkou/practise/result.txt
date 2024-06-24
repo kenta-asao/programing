@@ -2,7 +2,7 @@ c clasp version 3.3.5
 c Reading from encoding.cnf
 c Solving...
 c Answer: 1
-v -1 2 -3 -4 0
+v -1 -2 3 -4 0
 c Answer: 2
 v 1 -2 -3 -4 0
 c Answer: 3
@@ -12,7 +12,7 @@ v 1 -2 -3 4 0
 c Answer: 5
 v -1 2 3 -4 0
 c Answer: 6
-v -1 -2 3 -4 0
+v -1 2 -3 -4 0
 s SATISFIABLE
 c 
 c Models         : 6

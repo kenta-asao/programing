@@ -303,14 +303,17 @@ fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
     for n in 0..com.len() {
         let mut y_ok_arr = vec![];
         let mut y_ok_domain_arr =vec![];
-        for m in 0..domain {
-            if m > com[n][1] || m < com[n][1] {
-                y_ok_arr.push(m);
-                y_ok_domain_arr.push(power(2,variables)-1-m-1);
+        for m in 0..com.len()+1 {
+            if (m as i32) > com[n][1] || (m as i32) < com[n][1] {
+                y_ok_arr.push(m as i32);
+                y_ok_domain_arr.push(power(2,variables)-1-(m as i32)-1);
+                println!("{}" ,m);
+                println!("{}" ,power(2,variables)-1-(m as i32));
             }
+            println!("===")
         }
         
-        if has_common_elements(&y_ok_arr,&y_ok_domain_arr) == false {
+        if y_ok_arr[n] != y_ok_domain_arr[n] {
             let mut log_x = com[n][0];
             for x in 0..variables {
                 if log_x % 2 == 1 {
@@ -321,21 +324,28 @@ fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
                 }
                 log_x = log_x/2;
             }
+            let mut arr_y = vec![];
             for m in 0..domain {
                 if m > com[n][1] || m < com[n][1] {
                     let mut y = m;
                     for y_ok in 0..variables {
                         if y % 2 == 1 {
-                            write!(file,"{} ",y_ok+1+variables).expect("file not found.");
+                            arr_y.push(y_ok+1+variables);
                         }
                         else {
-                            write!(file, "-{} ", y_ok+1+variables).expect("file not found.");
+                            arr_y.push((y_ok+1+variables)*(-1));
                         }
                         y = y/2;
                     }
                 }
             }
+            for m in 0..arr_y.len() {
+                if contains(&arr_y, (arr_y[m])*(-1)) == false {
+                    write!{file, "{} ", arr_y[m]}.expect("file not found.");
+                }
+            }
             writeln!(file, "0").expect("cannot write.");
+
             let mut log_y = com[n][1];
             for y in 0..variables {
                 if log_y % 2 == 1 {
@@ -346,18 +356,24 @@ fn log_support_encoding(com: Vec<[i32; 2]>, domain: i32) {
                 }
                 log_y = log_y/2;
             }
+            let mut arr_x = vec![];
             for l in 0..domain {
                 if l > com[n][1] || l < com[n][1] {
                     let mut x = l;
                     for x_ok in 0..variables {
                         if x % 2 == 1 {
-                            write!(file,"{} ",x_ok+1).expect("file not found.");
+                            arr_x.push(x_ok+1);
                         }
                         else {
-                            write!(file, "-{} ", x_ok+1).expect("file not found.");
+                            arr_x.push((x_ok+1)*(-1));
                         }
                         x = x/2;
                 }
+            }
+        }
+        for m in 0..arr_x.len() {
+            if contains(&arr_x, (arr_x[m])*(-1)) == false {
+                write!{file, "{} ", arr_x[m]}.expect("file not found.");
             }
         }
         writeln!(file, "0").expect("cannot write.");
@@ -570,4 +586,13 @@ fn count_variables(clauses: &Vec<Vec<i32>>) -> usize {
         }
     }
     variables.len()
+}
+
+fn contains<T: PartialEq>(array: &[T], value: T) -> bool {
+    for element in array.iter() {
+        if *element == value {
+            return true;
+        }
+    }
+    false
 }
