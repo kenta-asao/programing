@@ -8,7 +8,7 @@ use regex::Regex;
 
 fn main() -> io::Result<()> {
     let color: i32 = 4; //ドメイン
-    let path = "graph_coloring.txt"; // 読み込むファイルのパス
+    let path = "myciel4.txt"; // 読み込むファイルのパス
 
     // ファイルを開く
     let file = File::open(&path)?;
@@ -76,6 +76,42 @@ fn encoding(color:i32, graph: Vec<[i32; 2]>, edge: i32, num_vertices: i32) {
         }
     }
 
+    /*claspの実行 */
+    clasp();
+}
+
+fn log_encoding(color:i32, graph: Vec<[i32; 2]>, edge: i32, num_vertices: i32) {
+    let path = "encoding.cnf";
+    let mut file = File::create(path).expect("file not found.");
+
+    println!("----------対数符号化----------");
+    let variables = log2(color);
+    let clauses = edge + (power(2, variables) - color) * num_vertices;
+
+    writeln!(file, "p cnf {} {}", variables*num_vertices, clauses).expect("cannot write.");
+
+    // 範囲外の値の禁止
+    for l in color + 1..power(2, variables) + 1 {
+        //ドメイン外の値の２進表現
+        let mut arr = vec![];
+        let mut a = l;
+        for _i in 0..variables {
+            arr1.push(a % 2);
+            a = a / 2;
+        }
+
+        //変数の範囲外の禁止
+        for k in 0..(variables as usize) {
+            for m in 0..num_vertices {
+                if arr[k] == 1 {
+                    write!(file, "-").expect("cannot write.");
+                }
+                write!(file, "-{} ", k + (variables as usize) + 1).expect("cannot write.");
+            }
+            writeln!(file, "0").expect("cannot write.");
+        }
+    }
+    
     /*claspの実行 */
     clasp();
 }
