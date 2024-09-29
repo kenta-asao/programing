@@ -3,6 +3,7 @@ print('じゃんけん大会')
 
 win = draw = lose = 0
 i = 0
+result = []
 
 while True:
     i = i + 1
@@ -31,15 +32,19 @@ while True:
     if user - cpu == -1 or user - cpu == 2:
         print('You win!')
         win = win + 1
+        result.append('win')
     elif user - cpu == 0:
         print('Draw')
         draw = draw + 1
+        result.append('draw')
     elif user - cpu == 1 or user - cpu == -2:
         print('You lose!')
         lose = lose + 1
+        result.append('lose')
     
     game = input('ゲームを続けますか？(y/n)\n')
     if game == 'n':
         break
 
 print('win:',win,'draw:',draw,'lose:',lose)
+print(result)
