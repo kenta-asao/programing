@@ -159,7 +159,6 @@ fn bimander_encoding(n: i32) {
     writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
 }
 
-
 fn log2(num: i32) -> i32 {
     let mut n: i32 = 0;
     loop {
