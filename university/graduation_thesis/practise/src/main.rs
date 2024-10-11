@@ -6,26 +6,21 @@ use std::io::Write;
 use std::process::{Command, Stdio};
 
 fn main() {
-    let n = 3;
-    pairwise_encoding(n);
+    let n = vec![1,3,5]
+    amo = pairwise_encoding(n);
 }
 
 //pairwise encoding -> encoding.cnfにDIMACS形式で出力
-fn pairwise_encoding(n: i32) {
-    let path = "encoding.cnf";
-    let mut file = File::create(path).expect("file not found.");
+fn pairwise_encoding(n: Vec<T>) {
 
-    let variables = n;
-    let clauses = n * (n - 1) / 2;
+    let mut amo = vec![];
 
-    writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
     for i in 1..n + 1 {
         for j in i + 1..n + 1 {
-            writeln! {file, "-{} -{} 0", i,j}.expect("cannot write.");
+            amo.push(vec![-n[i], -n[j], 0]);
         }
     }
-
-    clasp();
+    return amo;
 }
 
 fn clasp() {
