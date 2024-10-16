@@ -48,11 +48,7 @@ fn main() {
 
         writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
         for i in 0..clauses {
-            for j in 0..v_of_v[i as usize].len() {
-                write!(file, "{} ", v_of_v[i as usize][j]);
-            }
-            writeln!(file, "{}", 0);
-                
+            writeln!(file, "{} {} {}", v_of_v[i as usize][0], v_of_v[i as usize][1], 0);
         }
     }
     else if encoding == 3 {
