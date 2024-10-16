@@ -43,12 +43,16 @@ fn main() {
         let ladder_variable = n-1;
 
         let variables = n + ladder_variable;
-        let v_of_v = binary_encoding(v, n);
+        let v_of_v = ladder_encoding(v, n);
         let clauses = v_of_v.len();
 
         writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
         for i in 0..clauses {
-            writeln!(file, "{} {} {}", v_of_v[i as usize][0], v_of_v[i as usize][1], 0);
+            for j in 0..v_of_v[i as usize].len() {
+                write!(file, "{} ", v_of_v[i as usize][j]);
+            }
+            writeln!(file, "{}", 0);
+                
         }
     }
     else if encoding == 3 {
@@ -61,9 +65,25 @@ fn main() {
             for j in 0..v_of_v[i as usize].len() {
                 write!(file, "{} ", v_of_v[i as usize][j]);
             }
-            writeln!(file, "{}", 0);            
+            writeln!(file, "{}", 0);
+                
         }
     }
+    else if encoding == 4 {
+        let variables = n + log2(n);
+        let v_of_v = relaxed_ladder_ecncoding(v, n);
+        let clauses = v_of_v.len();
+
+        writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
+        for i in 0..clauses {
+            for j in 0..v_of_v[i as usize].len() {
+                write!(file, "{} ", v_of_v[i as usize][j]);
+            }
+            writeln!(file, "{}", 0);
+                
+        }
+    }
+    
     clasp();
 }
 
@@ -78,7 +98,7 @@ fn pairwise_encoding(input: Vec<i32>) -> Vec<Vec<i32>> {
     return result;
 }
 
-fn ladder_ecncoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
+fn ladder_encoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
     let mut result: Vec<Vec<i32>> = Vec::new();
 
     //ladder valid clauses
@@ -100,7 +120,7 @@ fn ladder_ecncoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
         else {
             result.push(vec![-(n+i-1), n+i,i]);
             result.push(vec![-i,n+i-1]);
-            result.push(vec![-i,n-(n+i)]);
+            result.push(vec![-i,-(n+i)]);
         }
     }
 
@@ -122,6 +142,32 @@ fn binary_encoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
                     }
                 }
             }
+        }
+    }
+
+    return result;
+}
+
+fn relaxed_ladder_ecncoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
+    let mut result: Vec<Vec<i32>> = Vec::new();
+
+    //ladder valid clauses
+    let ladder_variable = n-1;
+    for i in 1..ladder_variable {
+        result.push(vec![-(n+i+1), n+i])
+    }
+
+    //channelling clauses
+    for i in 1..n+1 {
+        if i == 1 {
+            result.push(vec![-i,-(n+i)]);
+        }
+        else if i == n {
+            result.push(vec![-i,n+i-1]);
+        }
+        else {
+            result.push(vec![-i,n+i-1]);
+            result.push(vec![-i,-(n+i)]);
         }
     }
 

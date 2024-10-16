@@ -7,7 +7,7 @@ use std::process::{Command, Stdio};
 
 fn main() {
     let n = 3;
-    let encoding = 3;
+    let encoding = 4;
     if encoding == 1 {
         pairwise_encoding(n);
     }
