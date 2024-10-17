@@ -1,7 +1,5 @@
-use itertools::Itertools;
 use std::fs::File;
 use std::io;
-use std::io::BufRead;
 use std::io::Write;
 use std::process::{Command, Stdio};
 
@@ -36,7 +34,7 @@ fn main() {
 
         writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
         for i in 0..clauses {
-            writeln!(file, "{} {} {}", v_of_v[i][0], v_of_v[i][1], 0);
+            writeln!(file, "{} {} {}", v_of_v[i][0], v_of_v[i][1], 0).expect("cannot write.");
         }
     }
     else if encoding == 2 {
@@ -48,7 +46,7 @@ fn main() {
 
         writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
         for i in 0..clauses {
-            writeln!(file, "{} {} {}", v_of_v[i as usize][0], v_of_v[i as usize][1], 0);
+            writeln!(file, "{} {} {}", v_of_v[i as usize][0], v_of_v[i as usize][1], 0).expect("cannot write.");
         }
     }
     else if encoding == 3 {
@@ -59,9 +57,9 @@ fn main() {
         writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
         for i in 0..clauses {
             for j in 0..v_of_v[i as usize].len() {
-                write!(file, "{} ", v_of_v[i as usize][j]);
+                write!(file, "{} ", v_of_v[i as usize][j]).expect("cannot write.");
             }
-            writeln!(file, "{}", 0);
+            writeln!(file, "{}", 0).expect("cannot write.");
                 
         }
     }
@@ -73,10 +71,20 @@ fn main() {
         writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
         for i in 0..clauses {
             for j in 0..v_of_v[i as usize].len() {
-                write!(file, "{} ", v_of_v[i as usize][j]);
+                write!(file, "{} ", v_of_v[i as usize][j]).expect("cannot write.");
             }
-            writeln!(file, "{}", 0);
+            writeln!(file, "{}", 0).expect("cannot write.");
                 
+        }
+    }
+    else if encoding == 6 {
+        let variables = n + root(n) + frac(n,root(n));
+        let v_of_v = product_encoding(v,n);
+        let clauses = 2+v_of_v.len();
+
+        writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
+        for i in 0..v_of_v.len() {
+            writeln!(file, "{} {} {}", v_of_v[i][0], v_of_v[i][1], 0).expect("cannot write.");
         }
     }
     
@@ -170,6 +178,39 @@ fn relaxed_ladder_ecncoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
     return result;
 }
 
+fn product_encoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
+    let mut result: Vec<Vec<i32>> = Vec::new();
+
+    let p:i32 = root(n);
+    let q:i32 = frac(n,p);
+    result.push(Vec::new());
+    result.push(Vec::new());
+
+    for i in 1..p+1 {
+        result[0].push(-(n+i));
+    }
+
+    for i in 1..q+1 {
+        result[1].push(-(n+p+i));
+    }
+
+    for k in 0..input.len() {
+        for i in 0..p {
+            for j in 0..q {
+                if input[k] == (i+1-1)*q+j+1 {
+                    let a:i32 = k as i32;
+                    result.push(vec![(-(a+1)).try_into().unwrap(), n+i+1]);
+                    result.push(vec![(-(a+1)).try_into().unwrap(), n+p+j+1]);
+                }
+            }
+        }
+    }
+
+    println!("{:?}", result);
+
+    return result;
+}
+
 fn log2(num: i32) -> i32 {
     let mut n: i32 = 0;
     loop {
@@ -177,6 +218,30 @@ fn log2(num: i32) -> i32 {
             break;
         }
         n += 1;
+    }
+    return n;
+}
+
+fn root(num: i32) -> i32 {
+    let mut n:i32 = 0;
+
+    loop {
+        if n*n >= num {
+            break;
+        }
+        n +=1;
+    }
+    return n;
+}
+
+fn frac(a: i32, b: i32) -> i32 {
+    let mut n:i32 = 0;
+
+    loop {
+        if n*b >= a{
+            break;
+        }
+        n +=1;
     }
     return n;
 }
@@ -192,3 +257,4 @@ fn clasp() {
         .expect("failed");
     println!("{}", String::from_utf8_lossy(&output.stdout));
 }
+
