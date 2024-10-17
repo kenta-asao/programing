@@ -4,7 +4,8 @@ use std::io::Write;
 use std::process::{Command, Stdio};
 
 fn main() {
-    let v = vec![1, 2, 3];
+    let v = vec![1, 2, 3, 4, 5, 6, 7, 8];
+    let n = 8;//ノード数
 
     let path = "encoding.cnf";
     let mut file = File::create(path).expect("file not found.");
@@ -23,8 +24,6 @@ fn main() {
         .read_line(&mut encoding)
         .expect("Failed to read line");
     let encoding: i32 = encoding.trim().parse().expect("Please type a number!");
-
-    let n = 3;//ノード数
 
     if encoding == 1 {
         let variables = n;
@@ -60,7 +59,6 @@ fn main() {
                 write!(file, "{} ", v_of_v[i as usize][j]).expect("cannot write.");
             }
             writeln!(file, "{}", 0).expect("cannot write.");
-                
         }
     }
     else if encoding == 4 {
@@ -74,13 +72,35 @@ fn main() {
                 write!(file, "{} ", v_of_v[i as usize][j]).expect("cannot write.");
             }
             writeln!(file, "{}", 0).expect("cannot write.");
-                
+        }
+    }
+    else if encoding == 5 {
+        let variables = n + frac(n,3);
+        let v_of_v = commander_encoding(v,n);
+        let clauses = v_of_v.len();
+
+        writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
+        for i in 0..clauses {
+            for j in 0..v_of_v[i as usize].len() {
+                write!(file, "{} ", v_of_v[i as usize][j]).expect("cannot write.");
+            }
+            writeln!(file, "{}", 0).expect("cannot write.");
         }
     }
     else if encoding == 6 {
         let variables = n + root(n) + frac(n,root(n));
         let v_of_v = product_encoding(v,n);
-        let clauses = 2+v_of_v.len();
+        let clauses = v_of_v.len();
+
+        writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
+        for i in 0..v_of_v.len() {
+            writeln!(file, "{} {} {}", v_of_v[i][0], v_of_v[i][1], 0).expect("cannot write.");
+        }
+    }
+    else if encoding == 7 {
+        let variables = n + log2(n);
+        let v_of_v = bimander_encoding(v,n);
+        let clauses = v_of_v.len();
 
         writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
         for i in 0..v_of_v.len() {
@@ -178,6 +198,53 @@ fn relaxed_ladder_ecncoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
     return result;
 }
 
+fn commander_encoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
+    let mut result: Vec<Vec<i32>> = Vec::new();
+    let mut group: Vec<Vec<i32>> = Vec::new();
+    let mut temp: Vec<i32> = Vec::new();
+    let mut temp_alo: Vec<i32> = Vec::new();
+    let mut temp_co_amo: Vec<i32> = Vec::new();
+
+    let commander_valriable = frac(input.len() as i32, 3);
+
+    for i in 0..input.len() {
+        temp.push(input[i]);
+
+        if temp.len() == 3 {
+            group.push(temp.clone());
+            temp.clear();
+        }
+    }
+
+    if !temp.is_empty() {
+        group.push(temp);
+    }
+
+    for i in 0..group.len() {
+        temp_alo.push(-(n+(i as i32)+1));
+        for j in 0..group[i].len() {
+            result.push(vec![n+(i as i32)+1,-group[i][j]]);
+            temp_alo.push(group[i][j]);
+        }
+
+        result.push(temp_alo.clone());
+        temp_alo.clear();
+
+        for j in 0..group[i].len() {
+            for k in j+1..group[i].len() {
+                result.push(vec![-group[i][j],-group[i][k]]);
+            }
+        }
+    }
+
+    for i in 0..commander_valriable {
+        temp_co_amo.push(-(n+(i as i32)+1));
+    }
+
+    result.push(temp_co_amo.clone());
+    return result;
+}
+
 fn product_encoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
     let mut result: Vec<Vec<i32>> = Vec::new();
 
@@ -206,7 +273,49 @@ fn product_encoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
         }
     }
 
-    println!("{:?}", result);
+    return result;
+}
+
+fn bimander_encoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
+    let mut result: Vec<Vec<i32>> = Vec::new();
+    let mut group: Vec<Vec<i32>> = Vec::new();
+    let mut temp: Vec<i32> = Vec::new();
+    let mut temp_co_amo: Vec<i32> = Vec::new();
+
+    //グループ化
+    for i in 0..input.len() {
+        temp.push(input[i]);
+
+        if temp.len() == 3 {
+            group.push(temp.clone());
+            temp.clear();
+        }
+    }
+    if !temp.is_empty() {
+        group.push(temp);
+    }
+
+    let bimander_variable = log2(group.len() as i32);
+
+    //符号化
+    for i in 0..bimander_variable {
+        for j in 0..group.len() {
+            for k in 0..group[j as usize].len(){
+                if i+1 == j.try_into().unwrap() {
+                    result.push(vec![-group[j][k], n+i+1]);
+                }
+                else {
+                    result.push(vec![-group[j][k], -(n+i+1)]);
+                }
+            }
+        }
+    }
+
+    for i in 0..bimander_variable {
+        temp_co_amo.push(-(n+(i as i32)+1));
+    }
+
+    result.push(temp_co_amo.clone());
 
     return result;
 }
