@@ -98,7 +98,7 @@ fn main() {
         }
     }
     else if encoding == 7 {
-        let variables = n + log2(n);
+        let variables = n + log2(frac(n,3));
         let v_of_v = bimander_encoding(v,n);
         let clauses = v_of_v.len();
 
@@ -296,6 +296,14 @@ fn bimander_encoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
     }
 
     let bimander_variable = log2(group.len() as i32);
+
+    for i in 0..group.len() {
+        for j in 0..group[i].len()-1 {
+            for k in j+1..group[i].len(){
+                result.push(vec![-group[i][j],-group[i][k]])
+            }
+        }
+    }
 
     //符号化
     for i in 0..bimander_variable {
