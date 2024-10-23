@@ -1,8 +1,0 @@
-[package]
-name = "practise"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-itertools = "0.10.3"
-regex = "1.7.0"
