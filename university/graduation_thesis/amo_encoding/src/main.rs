@@ -1,162 +1,299 @@
-use itertools::Itertools;
 use std::fs::File;
 use std::io;
-use std::io::BufRead;
 use std::io::Write;
 use std::process::{Command, Stdio};
 
 fn main() {
-    let n = 3;
-    let encoding = 4;
-    if encoding == 1 {
-        pairwise_encoding(n);
-    }
-    else if encoding == 2 {
-        ladder_ecncoding(n);
-    }
-    else if encoding == 3 {
-        binary_enncoding(n);
-    }
-    else {
-        relaxed_ladder_ecncoding(n);
-    }
-}
+    let v = vec![1, 2, 3, 4, 5];
+    let n = 5;//ノード数
 
-//pairwise encoding -> encoding.cnfにDIMACS形式で出力
-fn pairwise_encoding(n: i32) {
     let path = "encoding.cnf";
     let mut file = File::create(path).expect("file not found.");
 
-    let variables = n;
-    let clauses = n * (n - 1) / 2;
+    let mut encoding = String::new();
+    println!("実行する符号化を選択してください。");
+    println!("1:pairwise encoding");
+    println!("2:ladder encoding");
+    println!("3:binary encoding");
+    println!("4:relaxed ladder encoding");
+    println!("5:commander encoding");
+    println!("6:product encoding");
+    println!("7:bimander encoding");
 
-    writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
-    for i in 1..n + 1 {
-        for j in i + 1..n + 1 {
-            writeln! {file, "-{} -{} 0", i,j}.expect("cannot write.");
+    io::stdin()
+        .read_line(&mut encoding)
+        .expect("Failed to read line");
+    let encoding: i32 = encoding.trim().parse().expect("Please type a number!");
+
+    let mut v_of_v: Vec<Vec<i32>> = Vec::new();
+    let mut variables = 0;
+
+    match encoding {
+        i32::MIN..=1 => {
+            variables = n;
+            v_of_v = pairwise_encoding(v);
         }
+        2 => {
+            variables = n + n-1;
+            v_of_v = ladder_encoding(v, n);
+        }
+        3 => {
+            variables = n + log2(n);
+            v_of_v = binary_encoding(v, n);
+        }
+        4 => {
+            variables = n + log2(n);
+            v_of_v = relaxed_ladder_ecncoding(v, n);
+        }
+        5 => {
+            variables = n + frac(n,3);
+            v_of_v = commander_encoding(v,n);
+        }
+        6 => {
+            variables = n + root(n) + frac(n,root(n));
+            v_of_v = product_encoding(v,n);
+        }
+        7..=i32::MAX => {
+            variables = n + log2(frac(n,3));
+            v_of_v = bimander_encoding(v,n);
+        }
+    }
+    
+    let clauses = v_of_v.len();
+    writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
+    for i in 0..clauses {
+        for j in 0..v_of_v[i as usize].len() {
+            write!(file, "{} ", v_of_v[i as usize][j]).expect("cannot write.");
+        }
+        writeln!(file, "{}", 0).expect("cannot write.");
     }
 
     clasp();
 }
 
-fn ladder_ecncoding(n: i32) {
-    let path = "encoding.cnf";
-    let mut file = File::create(path).expect("file not found.");
-    let ladder_variable = n-1;
+fn pairwise_encoding(input: Vec<i32>) -> Vec<Vec<i32>> {
+    let mut result: Vec<Vec<i32>> = Vec::new();
+    
+    for i in 0..input.len() {
+        for j in i + 1..input.len() {
+            result.push(vec![-input[i], -input[j]]);
+        }
+    }
+    return result;
+}
 
-    let variables = n + ladder_variable;
-    let clauses = n-2 + 3*n;
-
-    writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
+fn ladder_encoding(_input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
+    let mut result: Vec<Vec<i32>> = Vec::new();
 
     //ladder valid clauses
+    let ladder_variable = n-1;
     for i in 1..ladder_variable {
-        writeln! {file, "-{} {} 0", n+i+1, n+i}.expect("cannot write.");
+        result.push(vec![-(n+i+1), n+i])
     }
 
     //channelling clauses
     for i in 1..n+1 {
         if i == 1 {
-            writeln! {file, "{} {} 0", n+i, i}.expect("cannot write.");
-            writeln! {file, "-{} -{} 0", i, n+i}.expect("cannot write.");
+            result.push(vec![n+i, i]);
+            result.push(vec![-i,-(n+i)]);
         }
         else if i == n {
-            writeln! {file, "-{} {} 0", n+i-1, i}.expect("cannot write.");
-            writeln! {file, "-{} {} 0", i, n+i-1}.expect("cannot write.");
+            result.push(vec![-(n+i-1), i]);
+            result.push(vec![-i,n+i-1]);
         }
         else {
-            writeln! {file, "-{} {} {} 0", n+i-1, n+i, i}.expect("cannot write.");
-            writeln! {file, "-{} {} 0", i, n+i-1}.expect("cannot write.");
-            writeln! {file, "-{} -{} 0", i, n+i}.expect("cannot write.");
+            result.push(vec![-(n+i-1), n+i,i]);
+            result.push(vec![-i,n+i-1]);
+            result.push(vec![-i,-(n+i)]);
         }
     }
 
-    clasp();
+    return result;
 }
 
-fn binary_enncoding(n: i32) {
-    let path = "encoding.cnf";
-    let mut file = File::create(path).expect("file not found.");
+fn binary_encoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
+    let mut result: Vec<Vec<i32>> = Vec::new();
 
-    let variables = n + log2(n);
-    let clauses = n*log2(n);
-
-    writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
-
-    for i in 1..log2(n)+1 {
+    for i in 0..input.len() {
         for j in 1..n+1 {
-            if j == (i+1) {
-                writeln! {file, "-{} {} 0", j, n+i}.expect("cannot write.");
-            }
-            else {
-                writeln! {file, "-{} -{} 0", j, n+i}.expect("cannot write.");
+            if input[i] == j {
+                for k in 1..log2(n)+1 {
+                    if j == (k+1) {
+                        result.push(vec![-j, n + k]);
+                    }
+                    else {
+                        result.push(vec![-j, -(n + k)]);
+                    }
+                }
             }
         }
     }
-    clasp();
+
+    return result;
 }
 
-fn relaxed_ladder_ecncoding(n: i32) {
-    let path = "encoding.cnf";
-    let mut file = File::create(path).expect("file not found.");
-    let ladder_variable = n-1;
-
-    let variables = n + ladder_variable;
-    let clauses = n-2 + 3*n;
-
-    writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
+fn relaxed_ladder_ecncoding(_input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
+    let mut result: Vec<Vec<i32>> = Vec::new();
 
     //ladder valid clauses
+    let ladder_variable = n-1;
     for i in 1..ladder_variable {
-        writeln! {file, "-{} {} 0", n+i+1, n+i}.expect("cannot write.");
+        result.push(vec![-(n+i+1), n+i])
     }
 
     //channelling clauses
     for i in 1..n+1 {
         if i == 1 {
-            writeln! {file, "-{} -{} 0", i, n+i}.expect("cannot write.");
+            result.push(vec![-i,-(n+i)]);
         }
         else if i == n {
-            writeln! {file, "-{} {} 0", i, n+i-1}.expect("cannot write.");
+            result.push(vec![-i,n+i-1]);
         }
         else {
-            writeln! {file, "-{} {} 0", i, n+i-1}.expect("cannot write.");
-            writeln! {file, "-{} -{} 0", i, n+i}.expect("cannot write.");
-        }        
+            result.push(vec![-i,n+i-1]);
+            result.push(vec![-i,-(n+i)]);
+        }
     }
 
-    clasp();
+    return result;
 }
 
-fn commander_encoding(n :i32) {
-    let path = "encoding.cnf";
-    let mut file = File::create(path).expect("file not found.");
+fn commander_encoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
+    let mut result: Vec<Vec<i32>> = Vec::new();
+    let mut group: Vec<Vec<i32>> = Vec::new();
+    let mut temp: Vec<i32> = Vec::new();
+    let mut temp_alo: Vec<i32> = Vec::new();
+    let mut temp_co_amo: Vec<i32> = Vec::new();
 
-    let variables = n;
-    let clauses = n * (n - 1) / 2;
+    let commander_valriable = frac(input.len() as i32, 3);
 
-    writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
+    for i in 0..input.len() {
+        temp.push(input[i]);
+
+        if temp.len() == frac(input.len() as i32, commander_valriable).try_into().unwrap() {
+            group.push(temp.clone());
+            temp.clear();
+        }
+    }
+
+    if !temp.is_empty() {
+        group.push(temp);
+    }
+
+    for i in 0..group.len() {
+        temp_alo.push(-(n+(i as i32)+1));
+        for j in 0..group[i].len() {
+            result.push(vec![n+(i as i32)+1,-group[i][j]]);
+            temp_alo.push(group[i][j]);
+        }
+
+        result.push(temp_alo.clone());
+        temp_alo.clear();
+
+        for j in 0..group[i].len() {
+            for k in j+1..group[i].len() {
+                result.push(vec![-group[i][j],-group[i][k]]);
+            }
+        }
+    }
+
+    if commander_valriable >= 2 {
+        for i in 0..commander_valriable {
+            temp_co_amo.push(-(n+(i as i32)+1));
+        }
+    
+        result.push(temp_co_amo.clone());
+    }
+    
+    return result;
 }
 
-fn product_encoding(n :i32) {
-    let path = "encoding.cnf";
-    let mut file = File::create(path).expect("file not found.");
+fn product_encoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
+    let mut result: Vec<Vec<i32>> = Vec::new();
 
-    let variables = n;
-    let clauses = n * (n - 1) / 2;
+    let p:i32 = root(n);
+    let q:i32 = frac(n,p);
+    result.push(Vec::new());
+    result.push(Vec::new());
 
-    writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
+    for i in 1..p+1 {
+        result[0].push(-(n+i));
+    }
+
+    for i in 1..q+1 {
+        result[1].push(-(n+p+i));
+    }
+
+    for k in 0..input.len() {
+        for i in 0..p {
+            for j in 0..q {
+                if input[k] == (i+1-1)*q+j+1 {
+                    let a:i32 = k as i32;
+                    result.push(vec![(-(a+1)).try_into().unwrap(), n+i+1]);
+                    result.push(vec![(-(a+1)).try_into().unwrap(), n+p+j+1]);
+                }
+            }
+        }
+    }
+
+    return result;
 }
 
-fn bimander_encoding(n: i32) {
-    let path = "encoding.cnf";
-    let mut file = File::create(path).expect("file not found.");
+fn bimander_encoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
+    let mut result: Vec<Vec<i32>> = Vec::new();
+    let mut group: Vec<Vec<i32>> = Vec::new();
+    let mut temp: Vec<i32> = Vec::new();
+    let mut temp_co_amo: Vec<i32> = Vec::new();
 
-    let variables = n;
-    let clauses = n * (n - 1) / 2;
+    //グループ化
+    let m = root(input.len().try_into().unwrap());//１つのグループの要素数
 
-    writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
+    for i in 0..input.len() {
+        temp.push(input[i]);
+
+        if temp.len() == m.try_into().unwrap() {
+            group.push(temp.clone());
+            temp.clear();
+        }
+    }
+    if !temp.is_empty() {
+        group.push(temp);
+    }
+
+    let bimander_variable = log2(group.len() as i32);
+
+    for i in 0..group.len() {
+        if group[i].len() >= 2{
+            for j in 0..group[i].len()-1 {
+                for k in j+1..group[i].len(){
+                    result.push(vec![-group[i][j],-group[i][k]])
+                }
+            }
+        }
+    }
+
+    //符号化
+    for i in 0..bimander_variable {
+        for j in 0..group.len() {
+            for k in 0..group[j as usize].len(){
+                if i+1 == j.try_into().unwrap() {
+                    result.push(vec![-group[j][k], n+i+1]);
+                }
+                else {
+                    result.push(vec![-group[j][k], -(n+i+1)]);
+                }
+            }
+        }
+    }
+
+    if bimander_variable >= 2 {
+        for i in 0..bimander_variable {
+            temp_co_amo.push(-(n+(i as i32)+1));
+        }    
+        result.push(temp_co_amo.clone());
+    }
+
+    return result;
 }
 
 fn log2(num: i32) -> i32 {
@@ -166,6 +303,30 @@ fn log2(num: i32) -> i32 {
             break;
         }
         n += 1;
+    }
+    return n;
+}
+
+fn root(num: i32) -> i32 {
+    let mut n:i32 = 0;
+
+    loop {
+        if n*n >= num {
+            break;
+        }
+        n +=1;
+    }
+    return n;
+}
+
+fn frac(a: i32, b: i32) -> i32 {
+    let mut n:i32 = 0;
+
+    loop {
+        if n*b >= a{
+            break;
+        }
+        n +=1;
     }
     return n;
 }
@@ -181,5 +342,4 @@ fn clasp() {
         .expect("failed");
     println!("{}", String::from_utf8_lossy(&output.stdout));
 }
-
 
