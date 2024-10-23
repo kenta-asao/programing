@@ -25,95 +25,49 @@ fn main() {
         .expect("Failed to read line");
     let encoding: i32 = encoding.trim().parse().expect("Please type a number!");
 
-    if encoding == 1 {
-        let variables = n;
+    let mut v_of_v: Vec<Vec<i32>> = Vec::new();
+    let mut variables = 0;
 
-        let v_of_v = pairwise_encoding(v);
-        let clauses = v_of_v.len();    
-
-        writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
-        for i in 0..clauses {
-            writeln!(file, "{} {} {}", v_of_v[i][0], v_of_v[i][1], 0).expect("cannot write.");
+    match encoding {
+        i32::MIN..=1 => {
+            variables = n;
+            v_of_v = pairwise_encoding(v);
         }
-    }
-    else if encoding == 2 {
-        let ladder_variable = n-1;
-
-        let variables = n + ladder_variable;
-        let v_of_v = ladder_encoding(v, n);
-        let clauses = v_of_v.len();
-
-        writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
-        for i in 0..clauses {
-            for j in 0..v_of_v[i as usize].len() {
-                write!(file, "{} ", v_of_v[i as usize][j]).expect("cannot write.");
-            }
-            writeln!(file, "{}", 0).expect("cannot write.");
+        2 => {
+            variables = n + n-1;
+            v_of_v = ladder_encoding(v, n);
         }
-    }
-    else if encoding == 3 {
-        let variables = n + log2(n);
-        let v_of_v = binary_encoding(v, n);
-        let clauses = v_of_v.len();
-
-        writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
-        for i in 0..clauses {
-            for j in 0..v_of_v[i as usize].len() {
-                write!(file, "{} ", v_of_v[i as usize][j]).expect("cannot write.");
-            }
-            writeln!(file, "{}", 0).expect("cannot write.");
+        3 => {
+            variables = n + log2(n);
+            v_of_v = binary_encoding(v, n);
         }
-    }
-    else if encoding == 4 {
-        let variables = n + log2(n);
-        let v_of_v = relaxed_ladder_ecncoding(v, n);
-        let clauses = v_of_v.len();
-
-        writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
-        for i in 0..clauses {
-            for j in 0..v_of_v[i as usize].len() {
-                write!(file, "{} ", v_of_v[i as usize][j]).expect("cannot write.");
-            }
-            writeln!(file, "{}", 0).expect("cannot write.");
+        4 => {
+            variables = n + log2(n);
+            v_of_v = relaxed_ladder_ecncoding(v, n);
         }
-    }
-    else if encoding == 5 {
-        let variables = n + frac(n,3);
-        let v_of_v = commander_encoding(v,n);
-        let clauses = v_of_v.len();
-
-        writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
-        for i in 0..clauses {
-            for j in 0..v_of_v[i as usize].len() {
-                write!(file, "{} ", v_of_v[i as usize][j]).expect("cannot write.");
-            }
-            writeln!(file, "{}", 0).expect("cannot write.");
+        5 => {
+            variables = n + frac(n,3);
+            v_of_v = commander_encoding(v,n);
         }
-    }
-    else if encoding == 6 {
-        let variables = n + root(n) + frac(n,root(n));
-        let v_of_v = product_encoding(v,n);
-        let clauses = v_of_v.len();
-
-        writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
-        for i in 0..v_of_v.len() {
-            writeln!(file, "{} {} {}", v_of_v[i][0], v_of_v[i][1], 0).expect("cannot write.");
+        6 => {
+            variables = n + root(n) + frac(n,root(n));
+            v_of_v = product_encoding(v,n);
         }
-    }
-    else if encoding == 7 {
-        let variables = n + log2(frac(n,3));
-        let v_of_v = bimander_encoding(v,n);
-        let clauses = v_of_v.len();
-
-        writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
-        for i in 0..clauses {
-            for j in 0..v_of_v[i as usize].len() {
-                write!(file, "{} ", v_of_v[i as usize][j]).expect("cannot write.");
-            }
-            writeln!(file, "{}", 0).expect("cannot write.");
+        7..=i32::MAX => {
+            variables = n + log2(frac(n,3));
+            v_of_v = bimander_encoding(v,n);
         }
     }
     
+    let clauses = v_of_v.len();
+    writeln!(file, "p cnf {} {}", variables, clauses).expect("cannot write.");
+    for i in 0..clauses {
+        for j in 0..v_of_v[i as usize].len() {
+            write!(file, "{} ", v_of_v[i as usize][j]).expect("cannot write.");
+        }
+        writeln!(file, "{}", 0).expect("cannot write.");
+    }
+
     clasp();
 }
 
@@ -128,7 +82,7 @@ fn pairwise_encoding(input: Vec<i32>) -> Vec<Vec<i32>> {
     return result;
 }
 
-fn ladder_encoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
+fn ladder_encoding(_input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
     let mut result: Vec<Vec<i32>> = Vec::new();
 
     //ladder valid clauses
@@ -178,7 +132,7 @@ fn binary_encoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
     return result;
 }
 
-fn relaxed_ladder_ecncoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
+fn relaxed_ladder_ecncoding(_input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
     let mut result: Vec<Vec<i32>> = Vec::new();
 
     //ladder valid clauses
@@ -211,7 +165,7 @@ fn commander_encoding(input: Vec<i32>, n: i32) -> Vec<Vec<i32>> {
     let mut temp_alo: Vec<i32> = Vec::new();
     let mut temp_co_amo: Vec<i32> = Vec::new();
 
-    let mut commander_valriable = frac(input.len() as i32, 3);
+    let commander_valriable = frac(input.len() as i32, 3);
 
     for i in 0..input.len() {
         temp.push(input[i]);
