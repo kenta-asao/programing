@@ -1,4 +1,5 @@
 use std::fs::File;
+use std::io;
 use std::io::Write;
 
 mod clause;
@@ -13,6 +14,21 @@ fn main(){
     let domain = 5;
     let path = "encoding.cnf";
     let mut file = File::create(path).expect("file not found.");
+
+    let mut encoding = String::new();
+    println!("実行する符号化を選択してください。");
+    println!("1:pairwise encoding");
+    println!("2:ladder encoding");
+    println!("3:binary encoding");
+    println!("4:relaxed ladder encoding");
+    println!("5:commander encoding");
+    println!("6:product encoding");
+    println!("7:bimander encoding");
+
+    io::stdin()
+        .read_line(&mut encoding)
+        .expect("Failed to read line");
+    let encoding: i32 = encoding.trim().parse().expect("Please type a number!");
 
     let mut x: Vec<Vec<Vec<i32>>> = Vec::new();
     let mut temp: Vec<i32> = Vec::new();
@@ -55,20 +71,31 @@ fn main(){
     let amo = alldifferent::alldifferent(x,n,domain);
     let mut amo_temp:Vec<Vec<i32>> = Vec::new();
     let mut variables = 0;
-    let mut encoding = 1;
 
     match encoding {
         i32::MIN..= 1 => {
             for i in 0..amo.len() {
-                let amo_temp = encoding::pairwise_encoding(amo[i].clone()); // ここで初期化
+                let amo_temp = encoding::pairwise_encoding(amo[i].clone());
                 for j in 0..amo_temp.len() {
                     result.push(amo_temp[j].clone());
                 }
             }
             variables = n * n * domain;
         },
-        2 =>  {},
-        3..=i32::MAX =>  {},
+        2 => {},
+        3 => {
+            for i in 0..amo.len() {
+                let amo_temp = encoding::binary_encoding(amo[i].clone(), n*n*domain);
+                for j in 0..amo_temp.len() {
+                    result.push(amo_temp[j].clone());
+                }
+            }
+            variables = n * n * domain +calculation::log2(n*n*domain);
+        },
+        4 => {},
+        5 => {},
+        6 => {},
+        7..=i32::MAX =>  {},
     }
 
     let clauses = result.len(); 
